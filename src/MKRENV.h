@@ -37,6 +37,7 @@ enum {
 class ENVClass {
 public:
   ENVClass(TwoWire& wire, int lightSensorPin);
+
   int version;
   int begin(int v);
   void end();

@@ -57,18 +57,17 @@
 #define VEML6075_UVCOMP2_REG        0x0b
 #define VEML6075_ID_REG             0x0c
 
-
 ENVClass::ENVClass(TwoWire  & wire, int lightSensorPin) :
   _wire(&wire),
   _lightSensorPin(lightSensorPin)
 {
 }
 
-int ENVClass::begin(int v=1)
+int ENVClass::begin(int v)
 {
-  #define VERSION v
-  _wire->begin();
 
+  _wire->begin();
+  version=v;
   if (i2cRead(HTS221_ADDRESS, HTS221_WHO_AM_I_REG) != 0xbc) {
     end();
 
@@ -79,23 +78,21 @@ int ENVClass::begin(int v=1)
     end();
     return 0;
   }
-  if(VERSION == 1){
+if(version==1){
     if (i2cReadWord(VEML6075_ADDRESS, VEML6075_ID_REG) != 0x0026) {
       end();
-
       return 0;
     }
   }
-
 
   readHTS221Calibration();
 
   // turn on the HTS221 and enable Block Data Update
   i2cWrite(HTS221_ADDRESS, HTS221_CTRL1_REG, 0x84);
-  if(version == 1){
-    // configure VEML6075 for 100 ms
+  if(version==1){
     i2cWriteWord(VEML6075_ADDRESS, VEML6075_UV_CONF_REG, 0x0010);
   }
+    // configure VEML6075 for 100 ms
   return 1;
 }
 
@@ -192,12 +189,11 @@ float ENVClass::readIlluminance(int units)
     return reading; // 1 Lux = 1 Meter-Candle
   }
 }
-
 // UV formula's and constants based on:
 //   https://www.vishay.com/docs/84339/designingveml6075.pdf
-#if VERSION == 1
 float ENVClass::readUVA()
 {
+  if(version==1){
     const float a = 2.22;
     const float b = 1.33;
 
@@ -209,10 +205,15 @@ float ENVClass::readUVA()
     float uvaComp = uva - (a * uvcomp1) - (b * uvcomp2);
 
     return uvaComp;
+  }else{
+    return 0;
+  }
+
 }
 
 float ENVClass::readUVB()
 {
+  if(version==1){
     const float c = 2.95;
     const float d = 1.74;
 
@@ -224,11 +225,14 @@ float ENVClass::readUVB()
     float uvbComp = uvb - (c * uvcomp1) - (d * uvcomp2);
 
     return uvbComp;
-
+  }else{
+    return 0;
+  }
 }
 
 float ENVClass::readUVIndex()
 {
+  if(version==1){
     const float UVAresp = 0.001461;
     const float UVBresp = 0.002591;
 
@@ -238,9 +242,10 @@ float ENVClass::readUVIndex()
     float uvi = ((uva * UVAresp) + (uvb * UVBresp)) / 2.0;
 
     return uvi;
+  }else{
+    return 0;
   }
 }
-#endif
 
 int ENVClass::i2cRead(uint8_t address, uint8_t reg)
 {
