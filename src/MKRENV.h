@@ -37,7 +37,7 @@ enum {
 class ENVClass {
 public:
   ENVClass(TwoWire& wire, int lightSensorPin);
-
+  int version;
   int begin();
   void end();
 
@@ -54,7 +54,7 @@ public:
 
 private:
   int i2cRead(uint8_t address, uint8_t reg);
-  int i2cRead16(uint8_t address, uint8_t reg) { 
+  int i2cRead16(uint8_t address, uint8_t reg) {
     return (i2cRead(address, reg) | (i2cRead(address, reg + 1) << 8));
   }
   int i2cWrite(uint8_t address, uint8_t reg, uint8_t val);

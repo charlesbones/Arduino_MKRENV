@@ -57,14 +57,16 @@
 #define VEML6075_UVCOMP2_REG        0x0b
 #define VEML6075_ID_REG             0x0c
 
+
 ENVClass::ENVClass(TwoWire  & wire, int lightSensorPin) :
   _wire(&wire),
   _lightSensorPin(lightSensorPin)
 {
 }
 
-int ENVClass::begin()
+int ENVClass::begin(int v=1)
 {
+  version=v;
   _wire->begin();
 
   if (i2cRead(HTS221_ADDRESS, HTS221_WHO_AM_I_REG) != 0xbc) {
@@ -77,29 +79,32 @@ int ENVClass::begin()
     end();
     return 0;
   }
+  if(version == 1){
+    if (i2cReadWord(VEML6075_ADDRESS, VEML6075_ID_REG) != 0x0026) {
+      end();
 
-  if (i2cReadWord(VEML6075_ADDRESS, VEML6075_ID_REG) != 0x0026) {
-    end();
-
-    return 0;
+      return 0;
+    }
   }
+
 
   readHTS221Calibration();
 
   // turn on the HTS221 and enable Block Data Update
   i2cWrite(HTS221_ADDRESS, HTS221_CTRL1_REG, 0x84);
-
-  // configure VEML6075 for 100 ms
-  i2cWriteWord(VEML6075_ADDRESS, VEML6075_UV_CONF_REG, 0x0010);
-
+  if(version == 1){
+    // configure VEML6075 for 100 ms
+    i2cWriteWord(VEML6075_ADDRESS, VEML6075_UV_CONF_REG, 0x0010);
+  }
   return 1;
 }
 
 void ENVClass::end()
 {
-  // shutdown VEML6075
-  i2cWriteWord(VEML6075_ADDRESS, VEML6075_UV_CONF_REG, 0x0001);
-
+  if(version == 1){
+    // shutdown VEML6075
+    i2cWriteWord(VEML6075_ADDRESS, VEML6075_UV_CONF_REG, 0x0001);
+  }
   // disable HTS221
   i2cWrite(HTS221_ADDRESS, HTS221_CTRL1_REG, 0x00);
 
@@ -162,7 +167,7 @@ float ENVClass::readPressure(int units)
   }
 
   float reading = (i2cRead(LPS22HB_ADDRESS, LPS22HB_PRESS_OUT_XL_REG) |
-          (i2cRead(LPS22HB_ADDRESS, LPS22HB_PRESS_OUT_L_REG) << 8) | 
+          (i2cRead(LPS22HB_ADDRESS, LPS22HB_PRESS_OUT_L_REG) << 8) |
           (i2cRead(LPS22HB_ADDRESS, LPS22HB_PRESS_OUT_H_REG) << 16)) / 40960.0;
 
   if (units == MILLIBAR) { // 1 kPa = 10 MILLIBAR
@@ -193,45 +198,57 @@ float ENVClass::readIlluminance(int units)
 
 float ENVClass::readUVA()
 {
-  const float a = 2.22;
-  const float b = 1.33;
+  if(version==1){
+    const float a = 2.22;
+    const float b = 1.33;
 
-  // read UVA and UV COMP's, then calculate compensated value
-  uint16_t uva = i2cReadWord(VEML6075_ADDRESS, VEML6075_UVA_DATA_REG);
-  uint16_t uvcomp1 = i2cReadWord(VEML6075_ADDRESS, VEML6075_UVCOMP1_REG);
-  uint16_t uvcomp2 = i2cReadWord(VEML6075_ADDRESS, VEML6075_UVCOMP2_REG);
+    // read UVA and UV COMP's, then calculate compensated value
+    uint16_t uva = i2cReadWord(VEML6075_ADDRESS, VEML6075_UVA_DATA_REG);
+    uint16_t uvcomp1 = i2cReadWord(VEML6075_ADDRESS, VEML6075_UVCOMP1_REG);
+    uint16_t uvcomp2 = i2cReadWord(VEML6075_ADDRESS, VEML6075_UVCOMP2_REG);
 
-  float uvaComp = uva - (a * uvcomp1) - (b * uvcomp2);
+    float uvaComp = uva - (a * uvcomp1) - (b * uvcomp2);
 
-  return uvaComp;
+    return uvaComp;
+  }else{
+    return ("This sensor is not available in MKR ENV shield Rev2");
+  }
 }
 
 float ENVClass::readUVB()
 {
-  const float c = 2.95;
-  const float d = 1.74;
+  if(version==1){
+    const float c = 2.95;
+    const float d = 1.74;
 
-  // read UVB and UV COMP's, then calculate compensated value
-  uint16_t uvb = i2cReadWord(VEML6075_ADDRESS, VEML6075_UVB_DATA_REG);
-  uint16_t uvcomp1 = i2cReadWord(VEML6075_ADDRESS, VEML6075_UVCOMP1_REG);
-  uint16_t uvcomp2 = i2cReadWord(VEML6075_ADDRESS, VEML6075_UVCOMP2_REG);
+    // read UVB and UV COMP's, then calculate compensated value
+    uint16_t uvb = i2cReadWord(VEML6075_ADDRESS, VEML6075_UVB_DATA_REG);
+    uint16_t uvcomp1 = i2cReadWord(VEML6075_ADDRESS, VEML6075_UVCOMP1_REG);
+    uint16_t uvcomp2 = i2cReadWord(VEML6075_ADDRESS, VEML6075_UVCOMP2_REG);
 
-  float uvbComp = uvb - (c * uvcomp1) - (d * uvcomp2);
+    float uvbComp = uvb - (c * uvcomp1) - (d * uvcomp2);
 
-  return uvbComp;
+    return uvbComp;
+  }else{
+    return ("This sensor is not available in MKR ENV shield Rev2");
+  }
 }
 
 float ENVClass::readUVIndex()
 {
-  const float UVAresp = 0.001461;
-  const float UVBresp = 0.002591;
+  if(version==1){
+    const float UVAresp = 0.001461;
+    const float UVBresp = 0.002591;
 
-  float uva = readUVA();
-  float uvb = readUVB();
+    float uva = readUVA();
+    float uvb = readUVB();
 
-  float uvi = ((uva * UVAresp) + (uvb * UVBresp)) / 2.0;
+    float uvi = ((uva * UVAresp) + (uvb * UVBresp)) / 2.0;
 
-  return uvi;
+    return uvi;
+  }else{
+    return ("this sensor is not available in MKR ENV shield Rev2");
+  }
 }
 
 int ENVClass::i2cRead(uint8_t address, uint8_t reg)
@@ -245,7 +262,7 @@ int ENVClass::i2cRead(uint8_t address, uint8_t reg)
   if (_wire->requestFrom(address, 1) != 1) {
     return -1;
   }
-  
+
   return _wire->read();
 }
 
