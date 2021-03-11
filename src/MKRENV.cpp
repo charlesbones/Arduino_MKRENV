@@ -195,10 +195,9 @@ float ENVClass::readIlluminance(int units)
 
 // UV formula's and constants based on:
 //   https://www.vishay.com/docs/84339/designingveml6075.pdf
-
+#if version 1
 float ENVClass::readUVA()
 {
-  //if(version==1){
     const float a = 2.22;
     const float b = 1.33;
 
@@ -210,14 +209,10 @@ float ENVClass::readUVA()
     float uvaComp = uva - (a * uvcomp1) - (b * uvcomp2);
 
     return uvaComp;
-  /*}else{
-    return 0  ;
-  }*/
 }
 
 float ENVClass::readUVB()
 {
-  //if(version==1){
     const float c = 2.95;
     const float d = 1.74;
 
@@ -229,14 +224,11 @@ float ENVClass::readUVB()
     float uvbComp = uvb - (c * uvcomp1) - (d * uvcomp2);
 
     return uvbComp;
-  /*}else{
-    return 0;
-  }*/
+  }
 }
 
 float ENVClass::readUVIndex()
 {
-  //if(version==1){
     const float UVAresp = 0.001461;
     const float UVBresp = 0.002591;
 
@@ -246,10 +238,9 @@ float ENVClass::readUVIndex()
     float uvi = ((uva * UVAresp) + (uvb * UVBresp)) / 2.0;
 
     return uvi;
-  /*}else{
-    return 0;
-  }*/
+  }
 }
+#endif
 
 int ENVClass::i2cRead(uint8_t address, uint8_t reg)
 {
