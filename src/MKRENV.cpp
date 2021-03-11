@@ -66,7 +66,7 @@ ENVClass::ENVClass(TwoWire  & wire, int lightSensorPin) :
 
 int ENVClass::begin(int v=1)
 {
-  version=v;
+  #define VERSION v
   _wire->begin();
 
   if (i2cRead(HTS221_ADDRESS, HTS221_WHO_AM_I_REG) != 0xbc) {
@@ -79,7 +79,7 @@ int ENVClass::begin(int v=1)
     end();
     return 0;
   }
-  if(version == 1){
+  if(VERSION == 1){
     if (i2cReadWord(VEML6075_ADDRESS, VEML6075_ID_REG) != 0x0026) {
       end();
 
@@ -195,7 +195,7 @@ float ENVClass::readIlluminance(int units)
 
 // UV formula's and constants based on:
 //   https://www.vishay.com/docs/84339/designingveml6075.pdf
-#if version 1
+#if VERSION == 1
 float ENVClass::readUVA()
 {
     const float a = 2.22;
@@ -224,7 +224,7 @@ float ENVClass::readUVB()
     float uvbComp = uvb - (c * uvcomp1) - (d * uvcomp2);
 
     return uvbComp;
-  }
+
 }
 
 float ENVClass::readUVIndex()
