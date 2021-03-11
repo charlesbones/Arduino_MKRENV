@@ -211,7 +211,7 @@ float ENVClass::readUVA()
 
     return uvaComp;
   }else{
-    return ("This sensor is not available in MKR ENV shield Rev2");
+    return 0;
   }
 }
 
@@ -230,7 +230,7 @@ float ENVClass::readUVB()
 
     return uvbComp;
   }else{
-    return ("This sensor is not available in MKR ENV shield Rev2");
+    return 0;
   }
 }
 
@@ -247,7 +247,7 @@ float ENVClass::readUVIndex()
 
     return uvi;
   }else{
-    return ("this sensor is not available in MKR ENV shield Rev2");
+    return 0;
   }
 }
 
